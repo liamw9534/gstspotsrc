@@ -75,7 +75,9 @@ enum
   ARG_URI,
   ARG_LOGGED_IN,
   ARG_SPOTIFY_KEY_FILE,
+#if 0
   ARG_SEARCH,
+#endif
   ARG_RESOLVE_URI,
   ARG_RESOLVE_URI_RESULT,
   ARG_BUFFER_TIME
@@ -367,6 +369,7 @@ serialize_tracks_in_album (sp_album *album, GString *str)
   return;
 }
 
+#if 0
 static void
 serialize_album (sp_album *album, GString *str)
 {
@@ -378,6 +381,7 @@ serialize_album (sp_album *album, GString *str)
 			  sp_album_year(album)
 			  );
 }
+#endif
 
 static gchar 
 *serialize_link (sp_link *link)
@@ -405,6 +409,8 @@ static gchar
 
   return ret;
 }
+
+#if 0
 
 static gchar 
 *serialize_search (sp_search *search)
@@ -439,7 +445,9 @@ static gchar
 
   return ret;
 }
+#endif
 
+#if 0
 static void 
 spotify_cb_search_complete(sp_search *search, void *userdata)
 {
@@ -458,6 +466,7 @@ spotify_cb_search_complete(sp_search *search, void *userdata)
   g_free (s_s->query);
   g_free (s_s);
 }
+#endif
 
 /*****************************************************************************/
 /*** SPOTIFY THREAD FUNCTIONS ************************************************/
@@ -541,16 +550,19 @@ static gboolean spotify_create_session (GstSpotSrc *spot)
     return FALSE;
   }
 
+  memset(&config, 0, sizeof(config));
   config.application_key = appkey;
   config.application_key_size = appkey_size;
   config.api_version = SPOTIFY_API_VERSION;
   //FIXME check if these paths are appropiate
-  config.cache_location = "tmp";
-  config.settings_location = "tmp";
+  config.cache_location = "/tmp";
+  config.settings_location = "/tmp";
   config.user_agent = "spotify-gstreamer-src";
   config.callbacks = &g_callbacks;
+  config.compress_playlists = FALSE;
+  config.dont_save_metadata_for_playlists = FALSE;
 
-  error = sp_session_init (&config, &GST_SPOT_SRC_SPOTIFY_SESSION (spot));
+  error = sp_session_create (&config, &GST_SPOT_SRC_SPOTIFY_SESSION (spot));
 
   if (SP_ERROR_OK != error) {
     GST_ERROR_OBJECT (spot, "Failed to create spotify_session: %s", sp_error_message (error));
@@ -582,7 +594,11 @@ static gboolean spotify_login (GstSpotSrc *spot)
   GST_DEBUG_OBJECT (spot, "Trying to login");
 
   /* login using the credentials given on the command line */
-  error = sp_session_login (GST_SPOT_SRC_SPOTIFY_SESSION (spot), GST_SPOT_SRC_USER (spot), GST_SPOT_SRC_PASS (spot));
+  error = sp_session_login (GST_SPOT_SRC_SPOTIFY_SESSION (spot),
+		  	  	  	  	  	GST_SPOT_SRC_USER (spot),
+		  	  	  	  	  	GST_SPOT_SRC_PASS (spot),
+		  	  	  	  	  	FALSE,
+		  	  	  	  	  	(const char *)NULL);
 
   if (SP_ERROR_OK != error) {
     GST_ERROR_OBJECT (spot, "Failed to login: %s", sp_error_message (error));
@@ -713,7 +729,7 @@ spotify_thread_func (void *data)
           if (GST_SPOT_SRC_CURRENT_TRACK (spot)) {
             int dur = sp_track_duration (GST_SPOT_SRC_CURRENT_TRACK (spot));
             if (dur == 0){
-              error = SP_ERROR_RESOURCE_NOT_LOADED;
+              error = SP_ERROR_IS_LOADING;
             }
             spot_work->retval = dur;
             
@@ -738,6 +754,7 @@ spotify_thread_func (void *data)
             error = sp_session_player_seek (GST_SPOT_SRC_SPOTIFY_SESSION (spot), spot_work->opt);
           }
           break;
+#if 0
         case SPOT_CMD_SEARCH:
 	  {
 	    sp_search *search;
@@ -757,6 +774,7 @@ spotify_thread_func (void *data)
 	    error = SP_ERROR_OK;
 	    break;
 	  }
+#endif
         case SPOT_CMD_RESOLVE_URI:
 	  {
 	    gchar *resolve_uri = (gchar *) spot_work->userdata;
@@ -906,9 +924,11 @@ gst_spot_src_class_init (GstSpotSrcClass * klass)
       g_param_spec_string ("spotifykeyfile", "Spotify Key File", "Path to spotify key file",
           "unknown", G_PARAM_READWRITE));
 
+#if 0
   g_object_class_install_property (gobject_class, ARG_SEARCH,
       g_param_spec_string ("search", "Search", "Spotify string to search on",
           "unknown", G_PARAM_WRITABLE));
+#endif
 
   g_object_class_install_property (gobject_class, ARG_RESOLVE_URI,
       g_param_spec_string ("resolve-uri", "Resolve URI", "A Spotify URI to resolve",
@@ -1068,6 +1088,7 @@ gst_spot_src_set_property (GObject * object, guint prop_id,
     case ARG_SPOTIFY_KEY_FILE:
       GST_SPOT_SRC_SPOTIFY_KEY_FILE (spot) = g_value_dup_string (value);
       break;
+#if 0
     case ARG_SEARCH:
       {
 	guint64 retval;
@@ -1077,6 +1098,7 @@ gst_spot_src_set_property (GObject * object, guint prop_id,
 	run_spot_cmd (spot, SPOT_CMD_SEARCH, &retval, 0, s_s);
 	break;
       }
+#endif
     case ARG_RESOLVE_URI:
       {
 	guint64 retval;
