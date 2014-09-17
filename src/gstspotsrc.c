@@ -39,10 +39,10 @@
 #include "config.h"
 
 #define DEFAULT_URI "spotify://spotify:track:3odhGRfxHMVIwtNtc4BOZk"
-#define DEFAULT_USER "user"
-#define DEFAULT_PASS "pass"
+#define DEFAULT_USER g_getenv("SPOTIFY_USER")
+#define DEFAULT_PASS g_getenv("SPOTIFY_PASS")
 #define DEFAULT_LOGGED_IN FALSE
-#define DEFAULT_SPOTIFY_KEY_FILE "spotify_appkey.key"
+#define DEFAULT_SPOTIFY_KEY_FILE g_getenv("SPOTIFY_APPKEY")
 #define DEFAULT_RESOLVE_URI_RESULT ""
 #define BUFFER_TIME_MAX 50000000
 #define BUFFER_TIME_DEFAULT 2000000
@@ -1616,7 +1616,7 @@ gst_spot_src_uri_get_type (void)
 static gchar **
 gst_spot_src_uri_get_protocols (void)
 {
-  static gchar *protocols[] = { "spot", NULL };
+  static gchar *protocols[] = { "spotify", NULL };
 
   return protocols;
 }
