@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 39
+/svn/!svn/ver/329/trunk/gst-spot-src/m4
+END
+as-compiler-flag.m4
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/329/trunk/gst-spot-src/m4/as-compiler-flag.m4
+END
+as-version.m4
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/329/trunk/gst-spot-src/m4/as-version.m4
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 51
+/svn/!svn/ver/329/trunk/gst-spot-src/m4/Makefile.am
+END

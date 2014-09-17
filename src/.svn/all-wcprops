@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/!svn/ver/1013/trunk/gst-spot-src/src
+END
+gstspotsrc.h
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/!svn/ver/998/trunk/gst-spot-src/src/gstspotsrc.h
+END
+gstspot.c
+K 25
+svn:wc:ra_dav:version-url
+V 50
+/svn/!svn/ver/285/trunk/gst-spot-src/src/gstspot.c
+END
+Makefile.am
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/563/trunk/gst-spot-src/src/Makefile.am
+END
+gstspotsrc.c
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/1013/trunk/gst-spot-src/src/gstspotsrc.c
+END
