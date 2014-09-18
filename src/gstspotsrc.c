@@ -20,6 +20,7 @@
  */
 
 #include <libspotify/api.h>
+#include <libspotify/apiwrapper.h>
 #include <gst/base/gstadapter.h>
 #include <gst/gst.h>
 
@@ -189,13 +190,13 @@ spotify_cb_logged_in (sp_session *spotify_session, sp_error error)
     return;
   }
 
-  sp_user *me = sp_session_user (spotify_session);
+  sp_user *me = spw_session_user (spotify_session);
   const char *my_name = (sp_user_is_loaded (me) ?
                          sp_user_display_name (me) :
                          sp_user_canonical_name (me));
   GST_CAT_DEBUG_OBJECT (gst_spot_src_debug_cb, ugly_spot, "Logged_in callback, user=%s", my_name);
   /* set default bitrate to audiofility */
-  sp_session_preferred_bitrate (spotify_session, SP_BITRATE_320k);
+  spw_session_preferred_bitrate (spotify_session, SP_BITRATE_320k);
   GST_SPOT_SRC_LOGGED_IN (ugly_spot) = TRUE;
 }
 
@@ -303,7 +304,7 @@ serialize_track (sp_track *track, GString *str)
 {
   while (sp_track_is_loaded (track) == 0) {
     gint timeout = 0;
-    sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (ugly_spot), &timeout);
+    spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (ugly_spot), &timeout);
   }
 
   sp_link *link = sp_link_create_from_track (track, 0);
@@ -562,7 +563,7 @@ static gboolean spotify_create_session (GstSpotSrc *spot)
   config.compress_playlists = FALSE;
   config.dont_save_metadata_for_playlists = FALSE;
 
-  error = sp_session_create (&config, &GST_SPOT_SRC_SPOTIFY_SESSION (spot));
+  error = spw_session_create (&config, &GST_SPOT_SRC_SPOTIFY_SESSION (spot));
 
   if (SP_ERROR_OK != error) {
     GST_ERROR_OBJECT (spot, "Failed to create spotify_session: %s", sp_error_message (error));
@@ -594,11 +595,11 @@ static gboolean spotify_login (GstSpotSrc *spot)
   GST_DEBUG_OBJECT (spot, "Trying to login");
 
   /* login using the credentials given on the command line */
-  error = sp_session_login (GST_SPOT_SRC_SPOTIFY_SESSION (spot),
-		  	  	  	  	  	GST_SPOT_SRC_USER (spot),
-		  	  	  	  	  	GST_SPOT_SRC_PASS (spot),
-		  	  	  	  	  	FALSE,
-		  	  	  	  	  	(const char *)NULL);
+  error = spw_session_login (GST_SPOT_SRC_SPOTIFY_SESSION (spot),
+		  	  	  	  	  	 GST_SPOT_SRC_USER (spot),
+		  	  	  	  	  	 GST_SPOT_SRC_PASS (spot),
+		  	  	  	  	  	 FALSE,
+		  	  	  	  	  	 (const char *)NULL);
 
   if (SP_ERROR_OK != error) {
     GST_ERROR_OBJECT (spot, "Failed to login: %s", sp_error_message (error));
@@ -607,10 +608,10 @@ static gboolean spotify_login (GstSpotSrc *spot)
 
   int timeout = -1;
 
-  sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+  spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
   while (!GST_SPOT_SRC_LOGGED_IN (spot) && !spot->login_failed) {
     usleep (10000);
-    sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+    spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
   }
 
   spot->login_failed = FALSE;
@@ -635,7 +636,7 @@ spotify_thread_func (void *data)
 
   while (spot->keep_spotify_thread) {
     if (GST_SPOT_SRC_SPOTIFY_SESSION (spot)) {
-      sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+      spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
     }
 
     g_get_current_time (&t);
@@ -658,7 +659,7 @@ spotify_thread_func (void *data)
           error = SP_ERROR_OK;
           break;
         case SPOT_CMD_LOGOUT:
-	  error = sp_session_logout(GST_SPOT_SRC_SPOTIFY_SESSION (spot));
+	  error = spw_session_logout(GST_SPOT_SRC_SPOTIFY_SESSION (spot));
 	  break;
         case SPOT_CMD_START:
           GST_DEBUG_OBJECT (spot, "Uri = %s", GST_SPOT_SRC_URI_LOCATION (spot));
@@ -694,23 +695,23 @@ spotify_thread_func (void *data)
           sp_track_add_ref (GST_SPOT_SRC_CURRENT_TRACK (spot));
           sp_link_add_ref (link);
 
-          sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+          spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
           while (sp_track_is_loaded (GST_SPOT_SRC_CURRENT_TRACK (spot)) == 0) {
-            sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+            spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
             usleep (10000);
           }
 
           GST_DEBUG_OBJECT (spot, "Now playing \"%s\"", sp_track_name (GST_SPOT_SRC_CURRENT_TRACK (spot)));
 
-          error = sp_session_player_load (GST_SPOT_SRC_SPOTIFY_SESSION (spot), GST_SPOT_SRC_CURRENT_TRACK (spot));
+          error = spw_session_player_load (GST_SPOT_SRC_SPOTIFY_SESSION (spot), GST_SPOT_SRC_CURRENT_TRACK (spot));
           if (error != SP_ERROR_OK) {
             GST_ERROR_OBJECT (spot, "Failed to load track '%s' uri=%s", sp_track_name (GST_SPOT_SRC_CURRENT_TRACK (spot)),
                 (GST_SPOT_SRC_URI_LOCATION (spot)));
             break;
           }
 
-          sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
-          error = sp_session_player_play (GST_SPOT_SRC_SPOTIFY_SESSION (spot), TRUE);
+          spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+          error = spw_session_player_play (GST_SPOT_SRC_SPOTIFY_SESSION (spot), TRUE);
           if (error != SP_ERROR_OK) {
             GST_ERROR_OBJECT (spot, "Failed to play track '%s' uri=%s", sp_track_name (GST_SPOT_SRC_CURRENT_TRACK (spot)),
                 (GST_SPOT_SRC_URI_LOCATION (spot)));
@@ -718,11 +719,11 @@ spotify_thread_func (void *data)
           }
           break;
         case SPOT_CMD_PROCESS:
-          sp_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
+          spw_session_process_events (GST_SPOT_SRC_SPOTIFY_SESSION (spot), &timeout);
           break;
 
         case SPOT_CMD_PLAY:
-          error = sp_session_player_play (GST_SPOT_SRC_SPOTIFY_SESSION (spot), TRUE);
+          error = spw_session_player_play (GST_SPOT_SRC_SPOTIFY_SESSION (spot), TRUE);
           break;
 
         case SPOT_CMD_DURATION:
@@ -740,18 +741,18 @@ spotify_thread_func (void *data)
 
         case SPOT_CMD_STOP:
           if (GST_SPOT_SRC_CURRENT_TRACK (spot)) {
-            error = sp_session_player_play (GST_SPOT_SRC_SPOTIFY_SESSION (spot), FALSE);
+            error = spw_session_player_play (GST_SPOT_SRC_SPOTIFY_SESSION (spot), FALSE);
             if (error != SP_ERROR_OK)  {
               break;
             }
             error = SP_ERROR_OK;
-            sp_session_player_unload (GST_SPOT_SRC_SPOTIFY_SESSION (spot));
+            spw_session_player_unload (GST_SPOT_SRC_SPOTIFY_SESSION (spot));
           }
           break;
 
         case SPOT_CMD_SEEK:
           if (GST_SPOT_SRC_CURRENT_TRACK (spot)) {
-            error = sp_session_player_seek (GST_SPOT_SRC_SPOTIFY_SESSION (spot), spot_work->opt);
+            error = spw_session_player_seek (GST_SPOT_SRC_SPOTIFY_SESSION (spot), spot_work->opt);
           }
           break;
 #if 0
