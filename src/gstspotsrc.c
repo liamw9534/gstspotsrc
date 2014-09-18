@@ -1023,6 +1023,12 @@ gst_spot_src_finalize (GObject * object)
 
   spot = GST_SPOT_SRC (object);
 
+  GST_CAT_DEBUG_OBJECT (gst_spot_src_debug_threads, spot, "Releasing spotify session");
+  if (GST_SPOT_SRC_SPOTIFY_SESSION(spot))
+  {
+    spw_session_release(GST_SPOT_SRC_SPOTIFY_SESSION(spot));
+  }
+
   /* make thread quit */
   g_mutex_lock (spot->process_events_mutex);
   spot->keep_spotify_thread = FALSE;
